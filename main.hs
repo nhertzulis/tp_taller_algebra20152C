@@ -9,7 +9,7 @@ instance Show Video
          show (Agregar f v) = (mostrarFrame f) ++ "\n" ++ (show v)
 
 type FrameComprimido = [(Integer, Integer, PixelDelta)]
-data VideoComprimido = IniciarComp Frame | AgregarNormal Frame VideoComprimido | AgregarComprimido FrameComprimido VideoComprimido
+data VideoComprimido = IniciarComp Frame | IniciarComp' Frame FrameComprimido | AgregarNormal Frame VideoComprimido | AgregarComprimido FrameComprimido VideoComprimido
 instance Show VideoComprimido
    where show (IniciarComp f) = "INICIAL \n" ++ mostrarFrame f
          show (AgregarNormal f v) = "NO COMPRIMIDO \n" ++ (mostrarFrame f) ++ "\n" ++ (show v)
@@ -36,7 +36,7 @@ norma (x, y, z) = sqrt $ fromInteger (x^2 + y^2 + z^2)
 type Posicion = (Integer, Integer)
 
 pixelsDiferentesEnFrame :: Frame -> Frame -> Float -> FrameComprimido
-pixelsDiferentesEnFrame frame frame' u = pixelsDiferentesEnFrame' frame frame' u (0, 0)
+pixelsDiferentesEnFrame frameBase frameActual u = pixelsDiferentesEnFrame' frameBase frameActual u (0, 0)
 
 pixelsDiferentesEnFrame' :: Frame -> Frame -> Float -> Posicion -> FrameComprimido
 pixelsDiferentesEnFrame' [] _ _ _ = []
@@ -53,12 +53,28 @@ diferenciaPixeles :: Pixel -> Pixel -> PixelDelta
 diferenciaPixeles (r, g, b) (r', g', b') = (r-r', g-g', b-b')
 
 -- Ejercicio 4/5
+type ProgresoCompresion = (Frame, Video, VideoComprimido) -- el frame es el último del video comprimido que no sufrió compresión
+
+compararFrames :: Frame -> Frame -> Float -> Integer -> (FrameComprimido, Bool)
+compararFrames frameBase frame u n =
+	let cambios = pixelsDiferentesEnFrame frameBase frame u in
+	let sonFramesDistintos = (fromIntegral $ length cambios) > n in
+	(cambios, sonFramesDistintos)
+
 comprimir :: Video -> Float -> Integer -> VideoComprimido
 comprimir (Iniciar frame) _ _ = IniciarComp frame
-comprimir (Agregar frame video) u n
-	| (fromIntegral $ length cambios) > n = AgregarNormal frame (comprimir video u n)
-	| otherwise = AgregarComprimido cambios (comprimir video u n)
-	where cambios = pixelsDiferentesEnFrame frame (ultimoFrame video) u
+comprimir (Agregar frame video) u n = comprimir' (frame, video, (IniciarComp frame)) u n
+	
+comprimir' :: ProgresoCompresion -> Float -> Integer -> VideoComprimido
+comprimir' (frameBase, (Iniciar frame), videoComprimido) u n
+	| sonFramesMuyDistintos = AgregarNormal frame videoComprimido
+	| otherwise = AgregarComprimido frameComprimido videoComprimido
+	where (frameComprimido, sonFramesMuyDistintos) = compararFrames frameBase frame u n
+comprimir' (frameBase, (Agregar frame video), videoComprimido) u n
+	| sonFramesMuyDistintos = comprimir' (frame, video, (AgregarNormal frame videoComprimido)) u n
+	| otherwise = comprimir' (frameBase, video, (AgregarComprimido frameComprimido videoComprimido)) u n
+	where (frameComprimido, sonFramesMuyDistintos) = compararFrames frameBase frame u n
+
 
 -- Ejercicio 5/5
 descomprimir :: VideoComprimido -> Video
