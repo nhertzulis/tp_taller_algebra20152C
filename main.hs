@@ -42,13 +42,13 @@ pixelsDiferentesEnFrame' :: Frame -> Frame -> Float -> Posicion -> FrameComprimi
 pixelsDiferentesEnFrame' [] _ _ _ = []
 pixelsDiferentesEnFrame' ([]:filas) (_:filas') u (fila, _) = pixelsDiferentesEnFrame' filas filas' u (fila+1, 0)
 pixelsDiferentesEnFrame' ((px:pxs):filas) ((px':px's):filas') u (fila, columna)
-	| norma pixelDelta < u = pixelsDiferentesDelTail
-	| otherwise = (fila, columna, pixelDelta) : pixelsDiferentesDelTail
+	| norma pixelDelta > u = (fila, columna, pixelDelta) : pixelsDiferentesDelTail
+	| otherwise = pixelsDiferentesDelTail
 	where	{
 		pixelsDiferentesDelTail = pixelsDiferentesEnFrame' (pxs:filas) (px's:filas') u (fila, columna+1);
 		pixelDelta = diferenciaPixeles px' px
 	}
-				 
+
 diferenciaPixeles :: Pixel -> Pixel -> PixelDelta
 diferenciaPixeles (r, g, b) (r', g', b') = (r-r', g-g', b-b')
 
