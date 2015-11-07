@@ -33,28 +33,22 @@ norma :: (Integer, Integer, Integer) -> Float
 norma (x, y, z) = sqrt $ fromInteger (x^2 + y^2 + z^2)
 
 -- Ejercicio 3/5
+type Posicion = (Integer, Integer)
+
 pixelsDiferentesEnFrame :: Frame -> Frame -> Float -> FrameComprimido
-pixelsDiferentesEnFrame [] _ _ = []
-pixelsDiferentesEnFrame frame frame' u
-	| norma (diferencia) < u = pixelsDiferentesEnFrame (sinUltimoPixel frame) (sinUltimoPixel frame') u
-	| otherwise = (pixelsDiferentesEnFrame (sinUltimoPixel frame) (sinUltimoPixel frame') u)
-		++ [[pred . length frame, pred . length . last frame, diferencia]]
-	where diferencia = diferenciaPixeles (ultimoPixel frame') (ultimoPixel frame)
--- *Main> pixelsDiferentesEnFrame v1f1 v2f2 1
--- [(0,0,(3,3,3)),(0,1,(3,3,3)),(1,0,(3,3,3)),(1,2,(-3,-3,-3)),(2,1,(-3,-3,-3)),(2,2,(-3,-3,-3))]
+pixelsDiferentesEnFrame frame frame' u = pixelsDiferentesEnFrame' frame frame' u (0, 0)
 
-ultimoPixel :: Frame -> Pixel
-ultimoPixel frame
-	| null ultimaFila = last . last . init frame
-  | otherwise = last ultimaFila
-	where ultimaFila = last frame						
-
-sinUltimoPixel :: Frame -> Frame
-sinUltimoPixel frame
-	| length ultimaFila == 1 = init frame
-  | otherwise = (init frame) ++ (init ultimaFila)
-	where ultimaFila = last frame					
-									 
+pixelsDiferentesEnFrame' :: Frame -> Frame -> Float -> Posicion -> FrameComprimido
+pixelsDiferentesEnFrame' [] _ _ _ = []
+pixelsDiferentesEnFrame' ([]:filas) (_:filas') u (fila, _) = pixelsDiferentesEnFrame' filas filas' u (fila+1, 0)
+pixelsDiferentesEnFrame' ((px:pxs):filas) ((px':px's):filas') u (fila, columna)
+	| norma pixelDelta < u = pixelsDiferentesDelTail
+	| otherwise = (fila, columna, pixelDelta) : pixelsDiferentesDelTail
+	where	{
+		pixelsDiferentesDelTail = pixelsDiferentesEnFrame' (pxs:filas) (px's:filas') u (fila, columna+1);
+		pixelDelta = diferenciaPixeles px px'
+	}
+				 
 diferenciaPixeles :: Pixel -> Pixel -> PixelDelta
 diferenciaPixeles (r, g, b) (r', g', b') = (r-r', g-g', b-b')
 
