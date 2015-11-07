@@ -46,7 +46,7 @@ pixelsDiferentesEnFrame' ((px:pxs):filas) ((px':px's):filas') u (fila, columna)
 	| otherwise = (fila, columna, pixelDelta) : pixelsDiferentesDelTail
 	where	{
 		pixelsDiferentesDelTail = pixelsDiferentesEnFrame' (pxs:filas) (px's:filas') u (fila, columna+1);
-		pixelDelta = diferenciaPixeles px px'
+		pixelDelta = diferenciaPixeles px' px
 	}
 				 
 diferenciaPixeles :: Pixel -> Pixel -> PixelDelta
