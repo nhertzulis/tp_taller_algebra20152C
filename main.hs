@@ -30,7 +30,7 @@ ultimoFrame (Agregar frame video) = frame
 
 -- Ejercicio 2/5
 norma :: (Integer, Integer, Integer) -> Float
-norma (x, y, z) = sqrt . fromInteger (x^^2 + y^^2 + z^^2)
+norma (x, y, z) = sqrt $ fromInteger (x^2 + y^2 + z^2)
 
 -- Ejercicio 3/5
 pixelsDiferentesEnFrame :: Frame -> Frame -> Float -> FrameComprimido
