@@ -56,7 +56,7 @@ diferenciaPixeles (r, g, b) (r', g', b') = (r-r', g-g', b-b')
 comprimir :: Video -> Float -> Integer -> VideoComprimido
 comprimir (Iniciar frame) _ _ = IniciarComp frame
 comprimir (Agregar frame video) u n
-	| fromIntegral . length cambios > n = AgregarNormal frame (comprimir video u n)
+	| (fromIntegral $ length cambios) > n = AgregarNormal frame (comprimir video u n)
 	| otherwise = AgregarComprimido cambios (comprimir video u n)
 	where cambios = pixelsDiferentesEnFrame frame (ultimoFrame video) u
 
