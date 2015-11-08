@@ -52,10 +52,11 @@ diferenciaPixeles :: Pixel -> Pixel -> PixelDelta
 diferenciaPixeles (r, g, b) (r', g', b') = (r-r', g-g', b-b')
 
 -- Ejercicio 4/5
-type ProgresoCompresion = (Frame, Video, VideoComprimido) -- el frame es el último agregado al video comprimido y se usa para comparar
+type CompresionParcial = (Frame, VideoComprimido) -- el frame es el último agregado al video comprimido y se usa para comparar
+type EstadoCompresion = (CompresionParcial, Video) -- el video es lo que resta procesar
 
-procesarFrame :: Frame -> Frame -> VideoComprimido -> Float -> Integer -> (Frame, VideoComprimido)
-procesarFrame frameBase frame videoComprimido u n
+procesarFrame :: Frame -> CompresionParcial -> Float -> Integer -> CompresionParcial
+procesarFrame frameBase (frame, videoComprimido) u n
 	| sonFramesMuyDistintos = (frame, (AgregarNormal frame videoComprimido))
 	| otherwise = (frameBase, (AgregarComprimido frameComprimido videoComprimido))
 	where
@@ -64,18 +65,16 @@ procesarFrame frameBase frame videoComprimido u n
 	
 comprimir :: Video -> Float -> Integer -> VideoComprimido
 comprimir (Iniciar frame) _ _ = IniciarComp frame
-comprimir (Agregar frame video) u n = comprimir' (frame, video, (IniciarComp frame)) u n
+comprimir (Agregar frame video) u n = comprimir' ((frame, (IniciarComp frame)), video) u n
 	
-comprimir' :: ProgresoCompresion -> Float -> Integer -> VideoComprimido
+comprimir' :: EstadoCompresion -> Float -> Integer -> VideoComprimido
 comprimir' (frameBase, (Iniciar frame), videoComprimido) u n = 
-	let (_, nuevoVideoComprimido) = procesarFrame frameBase frame videoComprimido u n
-	in nuevoVideoComprimido
+	snd $ procesarFrame frameBase frame videoComprimido u n
 comprimir' (frameBase, (Agregar frame video), videoComprimido) u n =
-	let (nuevoFrameBase, nuevoVideoComprimido) = procesarFrame frameBase frame videoComprimido u n
-	in comprimir' (nuevoFrameBase, video, nuevoVideoComprimido) u n
+	comprimir' ((procesarFrame frameBase frame videoComprimido u n), video) u n
 
 -- Ejercicio 5/5
-framesComprimidos :: VideoComprimodo -> ([FrameComprimido], VideoComprimido)
+framesComprimidos :: VideoComprimido -> ([FrameComprimido], VideoComprimido)
 framesComprimidos videoComprimido@(IniciarComp _) = ([], videoComprimido)
 framesComprimidos videoComprimido@(AgregarNormal _ _) = ([], videoComprimido)
 framesComprimidos (AgregarComprimido frameComprimido videoComprimido) =
