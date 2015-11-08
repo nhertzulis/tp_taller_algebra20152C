@@ -74,19 +74,38 @@ comprimir' (compresionParcial, (Agregar frame video)) u n =
 	comprimir' ((procesarFrame frame compresionParcial u n), video) u n
 
 -- Ejercicio 5/5
-framesComprimidos :: VideoComprimido -> ([FrameComprimido], VideoComprimido)
-framesComprimidos videoComprimido@(IniciarComp _) = ([], videoComprimido)
-framesComprimidos videoComprimido@(AgregarNormal _ _) = ([], videoComprimido)
-framesComprimidos (AgregarComprimido frameComprimido videoComprimido) =
-	let (framesComprimidosDelTail, restoDelVideo) = framesComprimidos videoComprimido
+separarFramesComprimidos :: VideoComprimido -> ([FrameComprimido], VideoComprimido)
+separarFramesComprimidos videoComprimido@(IniciarComp _) = ([], videoComprimido)
+separarFramesComprimidos videoComprimido@(AgregarNormal _ _) = ([], videoComprimido)
+separarFramesComprimidos (AgregarComprimido frameComprimido videoComprimido) =
+	let (framesComprimidosDelTail, restoDelVideo) = separarFramesComprimidos videoComprimido
 	in (frameComprimido : framesComprimidosDelTail, restoDelVideo)
+
+-- Asume que el siguiente frame no está comprimido porque es para un contexto especial de descompresión
+obtenerFrame :: VideoComprimido -> Frame
+obtenerFrame (IniciarComp frame) = frame
+obtenerFrame (AgregarNormal frame videoComprimido) = frame
+
+-- Invierte el orden de los frames
+agregarFrames :: [Frame] -> Video -> Video
+agregarFrames [] video = video
+agregarFrames (frame:frames) video = agregarFrames frames (Agregar frame video)
 
 descomprimir :: VideoComprimido -> Video
 descomprimir (IniciarComp frame) = Iniciar frame
-descomprimir (AgregarNormal frame video) = Agregar frame (descomprimir video)
-descomprimir (AgregarComprimido frameComprimido video) = 
-	let videoDescomprimido = descomprimir video in
-	Agregar (aplicarCambio (ultimoFrame videoDescomprimido) frameComprimido) videoDescomprimido 
+descomprimir (AgregarNormal frame videoComprimido) = descomprimir' videoComprimido (Iniciar frame)
+descomprimir videoComprimido@(AgregarComprimido _ _) = 
+	let (framesComprimidos, restoDelVideoComprimido) = separarFramesComprimidos videoComprimido in
+	let (frame:frames) = map (aplicarCambio $ obtenerFrame restoDelVideoComprimido) framesComprimidos
+	in descomprimir' restoDelVideoComprimido (agregarFrames frames (Iniciar frame))
+
+descomprimir' :: VideoComprimido -> Video -> Video
+descomprimir' (IniciarComp frame) video = Agregar frame video
+descomprimir' (AgregarNormal frame videoComprimido) video = descomprimir' videoComprimido (Agregar frame video)
+descomprimir' videoComprimido@(AgregarComprimido _ _) video =
+	let ([framesComprimidos], restoDelVideoComprimido) = separarFramesComprimidos videoComprimido in
+	let frames = map (aplicarCambio $ obtenerFrame restoDelVideoComprimido) [framesComprimidos]
+	in descomprimir' restoDelVideoComprimido (agregarFrames frames video)
 
 -- Funciones provistas por la cátedra
 sumarCambios :: FrameComprimido -> FrameComprimido -> FrameComprimido
