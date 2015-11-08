@@ -56,7 +56,7 @@ type CompresionParcial = (Frame, VideoComprimido) -- el frame es el último agre
 type EstadoCompresion = (CompresionParcial, Video) -- el video es lo que resta procesar
 
 procesarFrame :: Frame -> CompresionParcial -> Float -> Integer -> CompresionParcial
-procesarFrame frameBase (frame, videoComprimido) u n
+procesarFrame frame (frameBase, videoComprimido) u n
 	| sonFramesMuyDistintos = (frame, (AgregarNormal frame videoComprimido))
 	| otherwise = (frameBase, (AgregarComprimido frameComprimido videoComprimido))
 	where
@@ -68,10 +68,10 @@ comprimir (Iniciar frame) _ _ = IniciarComp frame
 comprimir (Agregar frame video) u n = comprimir' ((frame, (IniciarComp frame)), video) u n
 	
 comprimir' :: EstadoCompresion -> Float -> Integer -> VideoComprimido
-comprimir' (frameBase, (Iniciar frame), videoComprimido) u n = 
-	snd $ procesarFrame frameBase frame videoComprimido u n
-comprimir' (frameBase, (Agregar frame video), videoComprimido) u n =
-	comprimir' ((procesarFrame frameBase frame videoComprimido u n), video) u n
+comprimir' (compresionParcial, (Iniciar frame)) u n = 
+	snd $ procesarFrame frame compresionParcial u n
+comprimir' (compresionParcial, (Agregar frame video)) u n =
+	comprimir' ((procesarFrame frame compresionParcial u n), video) u n
 
 -- Ejercicio 5/5
 framesComprimidos :: VideoComprimido -> ([FrameComprimido], VideoComprimido)
