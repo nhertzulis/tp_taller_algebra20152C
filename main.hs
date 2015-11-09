@@ -223,8 +223,8 @@ comprimirComparandoFramesContiguos (Agregar frame video) u n =
 		restoDelVideoComprimido = comprimirComparandoFramesContiguos video u n
 	in
 		if sonFramesMuyDistintos
-		then AgregarNormal frame $ restoDelVideoComprimido
-		else AgregarComprimido frameComprimido $ restoDelVideoComprimido
+		then AgregarNormal frame restoDelVideoComprimido
+		else AgregarComprimido frameComprimido restoDelVideoComprimido
 		
 descomprimirComparandoFramesContiguos :: VideoComprimido -> Video
 descomprimirComparandoFramesContiguos (IniciarComp frame) = Iniciar frame
