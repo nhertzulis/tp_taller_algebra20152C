@@ -45,7 +45,6 @@ que en la segunda fila, tercer columna, la diferencia entre el valor de los pixe
 del primer y segundo frame es (-2, 0, 1).
 4. Un VideoComprimido está compuesto por frames normales y frames comprimidos. Para
 la construcción de videos comprimidos se lleva a cabo el siguiente procedimiento:
-1
 a) Se inicia con el primer frame del video original.
 b) En caso de haber 2 frames consecutivos muy similares se agrega al video comprimido
 el FrameComprimido que contiene el cambio para cada pixel. Si no, se agrega
@@ -69,17 +68,3 @@ de aplicar los cambios especificados por el frame comprimido al frame original
 (ver ejemplo en el código).
 sumarCambios :: FrameComprimido -> FrameComprimido -> FrameComprimido
 que une los cambios aplicados por dos frames comprimidos (ver ejemplo en el código).
-Condiciones de entrega:
-El trabajo práctico se debe hacer en grupos de exactamente 3 personas (salvo cuando
-lo contrario sea inexorable y con expresa autorización de la cátedra).
-La composición de cada grupo se debe comunicar a Silvina Dengra (sdengra@dc.uba.ar).
-Se debe entregar el código por mail a la lista de docentes (algebra1-doc@dc.uba.ar)
-a más tardar antes del comienzo de la clase del turno del día de entrega.
-Todos los integrantes deben ser del mismo turno. Recomendamos fuertemente que
-así sea. En caso de querer pedir una excepción a esta norma, debe hacerse con antelación
-y ateniéndose a todas las consecuencias (por ejemplo, la fecha de entrega será la más
-temprana, no la más tardía de las alternativas; ídem con la fecha de coloquio, donde
-deberán estar todos presentes aunque alguien curse en otro turno).
-Las funciones pedidas deben llamarse igual y deben tener la misma signatura que la
-que se pide. Pueden agregarse funciones auxiliares: cada una debe llevar un comentario
-explicando qué hace, qué es cada parámetro y qué restricciones tienen (de haberlas).
