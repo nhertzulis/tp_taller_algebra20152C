@@ -210,5 +210,28 @@ v2 = Agregar v2f4 (Agregar v2f3 (Agregar v2f2 (Iniciar v2f1)))
 v2Comp :: VideoComprimido
 v2Comp = comprimir v2 1 6
 
-												
 
+-- Implementación de la función comprimir pero que siempre compara frames contiguos.
+-- Con esta implementación la versión comprimida del video 1 es fiel al comentario de código expresado por la cátedra respecto de los frames que se comprimen.
+
+comprimirComparandoFramesContiguos :: Video -> Float -> Integer -> VideoComprimido
+comprimirComparandoFramesContiguos (Iniciar frame) _ _ = IniciarComp frame
+comprimirComparandoFramesContiguos (Agregar frame video) u n =
+	let
+		frameComprimido = pixelsDiferentesEnFrame (ultimoFrame video) frame u
+		sonFramesMuyDistintos = (fromIntegral $ length frameComprimido) > n
+		restoDelVideoComprimido = comprimirComparandoFramesContiguos video u n
+	in
+		if sonFramesMuyDistintos
+		then AgregarNormal frame $ restoDelVideoComprimido
+		else AgregarComprimido frameComprimido $ restoDelVideoComprimido
+		
+descomprimirComparandoFramesContiguos :: VideoComprimido -> Video
+descomprimirComparandoFramesContiguos (IniciarComp frame) = Iniciar frame
+descomprimirComparandoFramesContiguos (AgregarNormal frame videoComprimido) =
+	Agregar frame $ descomprimirComparandoFramesContiguos videoComprimido
+descomprimirComparandoFramesContiguos (AgregarComprimido frameComprimido videoComprimido) = 
+	let
+		restoDelVideoDescomprimido = descomprimirComparandoFramesContiguos videoComprimido
+		frameDescomprimido = aplicarCambio (ultimoFrame restoDelVideoDescomprimido) frameComprimido
+	in Agregar frameDescomprimido restoDelVideoDescomprimido
