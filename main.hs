@@ -10,11 +10,15 @@ instance Show Video
 
 type FrameComprimido = [(Integer, Integer, PixelDelta)]
 
--- Limitación encontrada: si un video comprimido es una lista de frames (comprimidos o no), para la lista así modelada es imposible definir una función reverse similar a las listas nativas, ya que carecemos de un constructor que acepte como primer frame un frame comprimido.
+-- Limitación encontrada: si un video comprimido es una lista de frames (comprimidos o no),
+-- para la lista así modelada es imposible definir una función reverse similar a las listas nativas,
+-- ya que carecemos de un constructor que acepte como primer frame uno comprimido.
 -- Como no tiene sentido un video comprimido que contenga solo frames comprimidos, una solución posible es modelarlo así:
 -- type PaqueteFrames = ([FrameComprimido], Frame)
--- data VideoComprimido = IniciarComp Frame | AgregarNormal Frame VideoComprimido | IniciarPaq PaqueteFrames | AgregarPaq PaqueteFrames VideoComprimido
--- Esto además facilita la descompresión si la compresión fue implementada comparando contra el último frame no comprimido.
+-- data VideoComprimido = IniciarComp Frame | AgregarNormal Frame VideoComprimido 
+-- 						| IniciarPaq PaqueteFrames | AgregarPaq PaqueteFrames VideoComprimido
+-- Este modelado no solo agrega la capacidad de invertir (quizá no tiene uso), sino que además facilita la descompresión
+-- si la compresión fue implementada comparando contra el último frame no comprimido.
 
 data VideoComprimido = IniciarComp Frame | AgregarNormal Frame VideoComprimido | AgregarComprimido FrameComprimido VideoComprimido
 instance Show VideoComprimido
@@ -59,10 +63,19 @@ diferenciaPixeles :: Pixel -> Pixel -> PixelDelta
 diferenciaPixeles (r, g, b) (r', g', b') = (r-r', g-g', b-b')
 
 -- Ejercicio 4/5
--- Al decidir si comprimir o no un frame, se compara al mismo con el último frame no comprimido.
+-- La decisión de comprimir o no un frame se toma en base a la comparación del mismo frame
+-- con el último frame no comprimido agregado al video comprimido.
 comprimir :: Video -> Float -> Integer -> VideoComprimido
 comprimir (Iniciar frame) _ _ = IniciarComp frame
-comprimir video u n = fst $ comprimir' video u n
+comprimir (Agregar frame video) u n =
+	let
+		(videoComprimido, frameBase) = comprimir' video u n
+		frameComprimido = pixelsDiferentesEnFrame frameBase frame u
+		sonFramesMuyDistintos = (fromIntegral $ length frameComprimido) > n
+	in
+		if sonFramesMuyDistintos
+		then AgregarNormal frame videoComprimido
+		else AgregarComprimido frameComprimido videoComprimido
 
 comprimir' :: Video -> Float -> Integer -> (VideoComprimido, Frame)
 comprimir' (Iniciar frame) _ _ = ((IniciarComp frame), frame)
@@ -77,30 +90,25 @@ comprimir' (Agregar frame video) u n =
 		else ((AgregarComprimido frameComprimido videoComprimido), frameBase)
 
 -- Ejercicio 5/5
-separarFramesComprimidos :: VideoComprimido -> ([FrameComprimido], VideoComprimido)
-separarFramesComprimidos videoComprimido@(IniciarComp _) = ([], videoComprimido)
-separarFramesComprimidos videoComprimido@(AgregarNormal _ _) = ([], videoComprimido)
-separarFramesComprimidos (AgregarComprimido frameComprimido videoComprimido) =
-	let (siguientesFramesComprimidos, restoDelVideo) = separarFramesComprimidos videoComprimido
-	in (frameComprimido : siguientesFramesComprimidos, restoDelVideo)
-
-obtenerFrame :: VideoComprimido -> Frame
-obtenerFrame (IniciarComp frame) = frame
-obtenerFrame (AgregarNormal frame videoComprimido) = frame
-
-agregarFrames :: [Frame] -> Video -> Video
-agregarFrames [] video = video
-agregarFrames (frame:frames) video = Agregar frame $ agregarFrames frames video
-
 descomprimir :: VideoComprimido -> Video
 descomprimir (IniciarComp frame) = Iniciar frame
 descomprimir (AgregarNormal frame videoComprimido) = Agregar frame $ descomprimir videoComprimido
-descomprimir videoComprimido@(AgregarComprimido _ _) = 
+descomprimir (AgregarComprimido frameComprimido videoComprimido) =
 	let
-		(framesComprimidos, restoDelVideoComprimido) = separarFramesComprimidos videoComprimido
-		framesDescomprimidos = map (aplicarCambio $ obtenerFrame restoDelVideoComprimido) framesComprimidos
-	in agregarFrames framesDescomprimidos $ descomprimir restoDelVideoComprimido
+		(videoDescomprimido, frameBase) = descomprimir' videoComprimido
+		frameDescomprimido = aplicarCambio frameBase frameComprimido
+	in Agregar frameDescomprimido videoDescomprimido
 
+descomprimir' :: VideoComprimido -> (Video, Frame)
+descomprimir' (IniciarComp frame) = ((Iniciar frame), frame)
+descomprimir' (AgregarNormal frame videoComprimido) =
+	((Agregar frame $ descomprimir videoComprimido), frame)
+descomprimir' (AgregarComprimido frameComprimido videoComprimido) =
+	let
+		(restoDelVideoDescomprimido, frameBase) = descomprimir' videoComprimido
+		frameDescomprimido = aplicarCambio frameBase frameComprimido
+	in ((Agregar frameDescomprimido restoDelVideoDescomprimido), frameBase)
+	
 -- Funciones provistas por la cátedra
 sumarCambios :: FrameComprimido -> FrameComprimido -> FrameComprimido
 sumarCambios fc1 fc2 = [(i, j, sumar deltas (busqueda i j fc2)) | (i, j, deltas) <- fc1] ++
@@ -135,7 +143,8 @@ f1 = [[p3, p3, p3], [p3, p3, p3]]
 video0 = Agregar f1 (Agregar f0 (Iniciar f0))
 
 -- Video 1:  En la versión comprimida, todos los frames son comprimidos (salvo el inicial).
--- ACLARACIÓN: Son comprimidos solo los frames 2 y 4 por la técnica utilizada -ver ejercicio 4-, en contraposición a comparar siempre frames contiguos
+-- ACLARACIÓN: Son comprimidos solo los frames 2 y 4 por la técnica utilizada -ver ejercicio 4-,
+-- en contraposición a comparar siempre frames contiguos
 
 v1f1 :: Frame
 v1f1 = [[p3, p3, p0, p0, p0],
@@ -210,9 +219,9 @@ v2 = Agregar v2f4 (Agregar v2f3 (Agregar v2f2 (Iniciar v2f1)))
 v2Comp :: VideoComprimido
 v2Comp = comprimir v2 1 6
 
-
 -- Implementación de la función comprimir pero que siempre compara frames contiguos.
--- Con esta implementación la versión comprimida del video 1 es fiel al comentario de código expresado por la cátedra respecto de los frames que se comprimen.
+-- Con esta implementación la versión comprimida del video 1 es fiel al comentario de código
+-- expresado por la cátedra respecto de los frames que se comprimen.
 
 comprimirComparandoFramesContiguos :: Video -> Float -> Integer -> VideoComprimido
 comprimirComparandoFramesContiguos (Iniciar frame) _ _ = IniciarComp frame
