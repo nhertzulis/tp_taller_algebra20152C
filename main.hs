@@ -134,7 +134,8 @@ f0 = [[p0, p0, p0], [p3, p3, p3]]
 f1 = [[p3, p3, p3], [p3, p3, p3]]
 video0 = Agregar f1 (Agregar f0 (Iniciar f0))
 
--- Video 1:  En la versión comprimida, todos los frames son comprimidos (salvo el inicial)
+-- Video 1:  En la versión comprimida, todos los frames son comprimidos (salvo el inicial).
+-- ACLARACIÓN: Son comprimidos solo los frames 2 y 4 por la técnica utilizada -ver ejercicio 4-, en contraposición a comparar siempre frames contiguos
 
 v1f1 :: Frame
 v1f1 = [[p3, p3, p0, p0, p0],
